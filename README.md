@@ -283,76 +283,61 @@ Lancement via l'API :
 curl -X POST http://127.0.0.1:5001/retrain
 ```
 
-Le reentrainement automatique regulier reste a faire. Il devra etre ajoute avec un cronjob ou une tache planifiee, par exemple pour relancer `scripts/train.py` chaque semaine.
+### Reentrainement automatique hebdomadaire
 
-## 8. Reste a Faire pour le Membre B
+Le reentrainement automatique est configure via les fichiers du dossier `scripts/` :
 
-Le projet est deja executable avec Docker, Flask et MySQL. Le membre B doit finaliser la partie donnees, reentrainement automatique et rapport d'evaluation.
+- `scripts/retrain.sh` : relance `scripts/train.py` et enregistre la sortie horodatee dans `logs/`.
+- `scripts/reentrainement_cron.example` : exemple de crontab (Linux et Docker), chaque lundi a 03h00.
+- `scripts/retrain_task.ps1` : equivalent Windows, enregistre une tache planifiee hebdomadaire.
 
-Taches a realiser :
+Exemple d'installation du cronjob sous Linux :
 
-1. Enrichir les donnees d'entrainement
+```bash
+crontab -e
+# Ajouter la ligne suivante (chemin absolu a adapter) :
+0 3 * * 1 /chemin/absolu/vers/le/projet/scripts/retrain.sh
+```
 
-   Modifier `database/seed.sql` pour ajouter davantage de tweets annotes. Les labels doivent suivre la structure :
+Sous Windows (PowerShell, depuis la racine du projet) :
 
-   ```text
-   positive = 1 si le tweet est positif, 0 sinon
-   negative = 1 si le tweet est negatif, 0 sinon
-   ```
+```powershell
+./scripts/retrain_task.ps1
+```
 
-   Il faut ajouter des exemples positifs, negatifs, neutres et mixtes afin d'ameliorer l'entrainement du modele.
+## 8. Travail Realise par le Membre B
 
-2. Verifier les donnees dans MySQL
+La partie donnees, reentrainement automatique et rapport d'evaluation est desormais terminee.
 
-   Apres modification de `seed.sql`, relancer la base si necessaire puis verifier que les tweets sont bien presents :
+1. Donnees d'entrainement enrichies
+
+   `database/seed.sql` contient maintenant environ 140 tweets annotes (anglais et francais), repartis en quatre categories : positifs `(1,0)`, negatifs `(0,1)`, neutres `(0,0)` et mixtes `(1,1)`.
+
+2. Reentrainement automatique
+
+   Ajout de `scripts/retrain.sh`, `scripts/reentrainement_cron.example` et `scripts/retrain_task.ps1` pour automatiser le reentrainement hebdomadaire (cronjob Linux/Docker ou tache planifiee Windows), avec journalisation dans `logs/`.
+
+3. Rapport d'evaluation
+
+   Ajout de `reports/generate_report.py` qui entraine les modeles, calcule les matrices de confusion et les mesures precision / rappel / F1-score, puis genere :
+
+   - `reports/confusion_matrix_positive.png` ;
+   - `reports/confusion_matrix_negative.png` ;
+   - `reports/rapport_evaluation.pdf` (rapport final en francais).
+
+   Pour regenerer le rapport :
 
    ```bash
-   docker compose exec mysql mysql -u root -proot socialmetrics
+   python reports/generate_report.py
    ```
 
-   Exemple de requete :
+   Le script lit les tweets depuis MySQL si la base est disponible, sinon il se rabat automatiquement sur `database/seed.sql`.
 
-   ```sql
-   SELECT COUNT(*) FROM tweets;
-   SELECT positive, negative, COUNT(*) FROM tweets GROUP BY positive, negative;
-   ```
-
-3. Relancer l'entrainement
-
-   Executer le script :
-
-   ```bash
-   docker compose run --rm api python scripts/train.py
-   ```
-
-   Recuperer les matrices de confusion et les scores affiches dans le terminal.
-
-4. Ajouter le reentrainement automatique
-
-   Ajouter un fichier d'exemple de cronjob ou de tache planifiee, par exemple :
-
-   ```text
-   scripts/reentrainement_cron.example
-   ```
-
-   Ce fichier doit montrer comment relancer `scripts/train.py` automatiquement chaque semaine.
-
-5. Rediger le rapport d'evaluation
-
-   Creer le rapport final en francais dans `reports/`, puis l'exporter en PDF. Le rapport doit contenir :
-
-   - la description du dataset utilise ;
-   - les deux matrices de confusion ;
-   - precision, rappel et F1-score ;
-   - une analyse des erreurs frequentes ;
-   - les biais possibles ;
-   - des recommandations pour ameliorer le modele.
-
-Livrables attendus pour le membre B :
+Livrables produits pour le membre B :
 
 - `database/seed.sql` enrichi ;
-- un exemple de reentrainement automatique ;
-- le rapport final d'evaluation en PDF dans `reports/`.
+- scripts de reentrainement automatique ;
+- rapport final d'evaluation en PDF dans `reports/`.
 
 ## 9. Rapport d'Evaluation
 
@@ -372,14 +357,14 @@ Un plan detaille est disponible dans `reports/README.md`.
 
 ## 10. Repartition du Travail
 
-Membre A : API, base de donnees et infrastructure
+Membre A (Jie FAN) : API, base de donnees et infrastructure
 
 - Developper l'API Flask et les endpoints `/analyze`, `/sentiment` et `/retrain`.
 - Mettre en place la connexion entre l'API et MySQL.
 - Configurer Docker, Docker Compose et la structure de la base de donnees.
 - Documenter l'installation et l'utilisation de l'API.
 
-Membre B : donnees, reentrainement et rapport
+Membre B (Quang HOANG) : donnees, reentrainement et rapport
 
 - Enrichir `database/seed.sql` avec davantage de tweets annotes.
 - Mettre en place le reentrainement automatise via cronjob ou tache planifiee.

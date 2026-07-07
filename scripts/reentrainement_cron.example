@@ -1,0 +1,41 @@
+# =====================================================================
+# Exemple de configuration cron pour le reentrainement hebdomadaire
+# du modele SocialMetrics AI.
+#
+# Le sujet demande de reentrainer le modele CHAQUE SEMAINE avec les
+# donnees les plus recentes de la table `tweets`.
+#
+# ---------------------------------------------------------------------
+# 1) INSTALLATION SUR UNE MACHINE LINUX (hors Docker)
+# ---------------------------------------------------------------------
+# Ouvrir l'editeur de crontab de l'utilisateur :
+#
+#     crontab -e
+#
+# Puis ajouter la ligne suivante (adapter le chemin absolu du projet).
+# Ici : chaque LUNDI a 03h00 du matin.
+#
+#     0 3 * * 1 /chemin/absolu/vers/le/projet/scripts/retrain.sh
+#
+# Format des 5 champs cron :
+#     minute  heure  jour_du_mois  mois  jour_de_la_semaine
+#     0       3      *             *     1            -> lundi 03:00
+#
+# Verifier que la tache est bien enregistree :
+#
+#     crontab -l
+#
+# ---------------------------------------------------------------------
+# 2) INSTALLATION AVEC DOCKER COMPOSE
+# ---------------------------------------------------------------------
+# Sur la machine hote, planifier l'appel du conteneur API qui execute
+# le script d'entrainement contre le service MySQL :
+#
+#     0 3 * * 1 cd /chemin/absolu/vers/le/projet && docker compose run --rm api python scripts/train.py >> logs/retrain_cron.log 2>&1
+#
+# ---------------------------------------------------------------------
+# 3) INSTALLATION SUR WINDOWS (Planificateur de taches)
+# ---------------------------------------------------------------------
+# Voir le script PowerShell : scripts/retrain_task.ps1
+# Il enregistre une tache planifiee equivalente (chaque lundi a 03h00).
+# =====================================================================
